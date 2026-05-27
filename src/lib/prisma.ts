@@ -9,7 +9,7 @@ const globalForPrisma = globalThis as unknown as {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   family: 4, // 强制 IPv4，避免 IPv6 超时
-});
+} as import("pg").PoolConfig);
 
 const adapter = new PrismaPg(pool);
 
