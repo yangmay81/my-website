@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String @unique
+  password String
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  visibility String   @default("PUBLIC") // PUBLIC, PRIVATE, LINK, PASSWORD
+  password   String?
+  shareToken String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  medias     Media[]
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  postId    String
+  url       String
+  type      String   // IMAGE, VIDEO, AUDIO
+  filename  String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
