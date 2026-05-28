@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(rm -rf \"D:/桌面/个人网站/\"* \"D:/桌面/个人网站\"/.git)",
-      "Bash(rm -rf \"D:/桌面/temp-site\")"
+      "Bash(rm -rf \"D:/桌面/temp-site\")",
+      "Bash(npm install *)",
+      "Bash(npx vercel *)",
+      "Bash(git push *)",
+      "Bash(git commit *)",
+      "Bash(git add *)",
+      "Bash(git -c *)",
+      "Bash(git remote *)"
     ]
   }
 }
