@@ -1,0 +1,9 @@
+[build]
+  command = "npx prisma generate && next build"
+  publish = ".next"
+
+[build.environment]
+  NEXT_IGNORE_ESLINT = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

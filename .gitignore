@@ -4,3 +4,8 @@ node_modules/
 *.db-journal
 .env
 .env.local
+
+.vercel
+
+# Local Netlify folder
+.netlify
