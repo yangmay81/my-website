@@ -6,10 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 
-// 本地构建时跳过数据库预渲染（DB 连接慢），Netlify 构建时可正常 ISR
-export const dynamic = "force-dynamic";
-export const revalidate = 3600;
-
 export const metadata: Metadata = {
   title: "我的个人网站",
   description: "分享我的日常生活和所思所想",
