@@ -11,6 +11,12 @@ export default function DeleteButton({ postId }: { postId: string }) {
     if (!confirm("确定删除这篇文章？此操作不可撤销。")) return;
     setLoading(true);
     await fetch(`/api/posts/${postId}`, { method: "DELETE" });
+    // 触发首页 ISR 重新验证
+    fetch("/api/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "/" }),
+    }).catch(() => {});
     setLoading(false);
     router.refresh();
   }

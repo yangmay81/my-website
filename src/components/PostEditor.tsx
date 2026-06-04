@@ -52,6 +52,12 @@ export default function PostEditor({ post }: Props) {
     });
 
     if (res.ok) {
+      // 触发首页 ISR 重新验证
+      fetch("/api/revalidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: "/" }),
+      }).catch(() => {});
       router.push("/admin/posts");
       router.refresh();
     } else {

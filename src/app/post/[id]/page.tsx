@@ -1,71 +1,73 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { use } from "react";
-import type { Post, Media } from "@prisma/client";
-import PasswordGate from "@/components/PasswordGate";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import PasswordProtectedPost from "@/components/PasswordProtectedPost";
 import MediaGallery from "@/components/MediaGallery";
+import CommentSection from "@/components/CommentSection";
 import Link from "next/link";
 
-export default function PostPage({
-  params,
-}: {
+interface Props {
   params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
-  const [post, setPost] = useState<(Post & { medias: Media[] }) | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+}
 
-  useEffect(() => {
-    async function fetchPost() {
-      try {
-        const res = await fetch(`/api/posts/${id}`);
-        if (res.ok) {
-          setPost(await res.json());
-        } else {
-          setError("文章不存在");
-        }
-      } catch {
-        setError("加载失败");
-      }
-      setLoading(false);
-    }
-    fetchPost();
-  }, [id]);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const post = await prisma.post.findUnique({
+    where: { id },
+    select: { title: true, content: true, visibility: true },
+  });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <p className="text-text-muted">加载中...</p>
-      </div>
-    );
+  if (!post || post.visibility === "PRIVATE") {
+    return { title: "文章不存在" };
   }
 
-  if (error) {
+  const desc = post.content.replace(/<[^>]*>/g, "").slice(0, 160);
+  return {
+    title: post.title,
+    description: desc,
+    openGraph: { title: post.title, description: desc },
+  };
+}
+
+export default async function PostPage({ params }: Props) {
+  const { id } = await params;
+  const session = await auth();
+
+  const post = await prisma.post.findUnique({
+    where: { id },
+    include: { medias: true },
+  });
+
+  if (!post) notFound();
+
+  // 可见性控制：私密文章仅管理员可见
+  if (post.visibility === "PRIVATE" && !session) {
+    notFound();
+  }
+
+  // 密码保护：渲染客户端密码验证组件
+  if (post.visibility === "PASSWORD" && !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="text-center">
-          <p className="text-text-muted text-lg mb-4">{error}</p>
-          <Link href="/" className="text-primary hover:text-primary-dark underline">
-            返回首页
+      <div className="min-h-screen bg-bg">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <Link
+            href="/"
+            className="text-sm text-text-muted hover:text-text transition-colors mb-6 inline-block"
+          >
+            &larr; 返回首页
           </Link>
+          <PasswordProtectedPost
+            postId={post.id}
+            medias={post.medias}
+            title={post.title}
+          />
         </div>
       </div>
     );
   }
 
-  if (!post) return null;
-
-  if (post.visibility === "PASSWORD") {
-    return (
-      <PasswordGate
-        postId={post.id}
-        onVerified={(verifiedPost) => setPost(verifiedPost)}
-      />
-    );
-  }
-
+  // PUBLIC / LINK / 管理员访问 — 直接渲染
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-3xl mx-auto px-4 py-8">
@@ -92,6 +94,8 @@ export default function PostPage({
             </time>
           </div>
         </article>
+
+        <CommentSection postId={post.id} />
       </div>
     </div>
   );
